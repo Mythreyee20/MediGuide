@@ -4,6 +4,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Send, Stethoscope, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { DepartmentCard } from "@/components/DepartmentCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -163,20 +164,32 @@ function Index() {
                 </div>
               </div>
             ) : (
-              messages.map((m) => (
-                <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-chat-user text-chat-user-foreground rounded-br-sm"
-                      : "bg-secondary text-foreground rounded-bl-sm"
-                  }`}>
-                    <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">
-                      {m.role === "user" ? t.you : t.ai}
+              messages.map((m, idx) => {
+                const isLast = idx === messages.length - 1;
+                const stillStreaming = isLast && isLoading && m.role === "assistant";
+                const fullText = m.parts
+                  .map((p) => (p.type === "text" ? p.text : ""))
+                  .join("");
+                return (
+                  <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-chat-user text-chat-user-foreground rounded-br-sm"
+                        : "bg-secondary text-foreground rounded-bl-sm"
+                    }`}>
+                      <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">
+                        {m.role === "user" ? t.you : t.ai}
+                      </div>
+                      {renderText(m)}
                     </div>
-                    {renderText(m)}
+                    {m.role === "assistant" && !stillStreaming && (
+                      <div className="w-full max-w-[85%]">
+                        <DepartmentCard text={fullText} lang={lang} />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex justify-start">
